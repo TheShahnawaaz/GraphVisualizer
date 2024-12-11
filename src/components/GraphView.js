@@ -47,6 +47,7 @@ const GraphView = () => {
 
   // Handle changes in edge fields
   const handleEdgeChange = (index, field, value) => {
+    if (!editedGraph) return; // Prevent errors if editedGraph is null
     const updatedEdges = [...editedGraph.edgeList];
     updatedEdges[index] = { ...updatedEdges[index], [field]: value };
     setEditedGraph({ ...editedGraph, edgeList: updatedEdges });
@@ -54,6 +55,7 @@ const GraphView = () => {
 
   // Add a new edge
   const handleAddEdge = () => {
+    if (!editedGraph) return; // Prevent errors if editedGraph is null
     const newEdge =
       editedGraph.weightType === 'weighted'
         ? { source: '1', target: '1', weight: 1 }
@@ -66,6 +68,7 @@ const GraphView = () => {
 
   // Remove an edge
   const handleRemoveEdge = (index) => {
+    if (!editedGraph) return; // Prevent errors if editedGraph is null
     const updatedEdges = [...editedGraph.edgeList];
     updatedEdges.splice(index, 1);
     setEditedGraph({ ...editedGraph, edgeList: updatedEdges });
@@ -73,6 +76,8 @@ const GraphView = () => {
 
   // Save changes to the graph
   const handleSave = async () => {
+    if (!editedGraph) return; // Prevent errors if editedGraph is null
+
     // Validation
     for (let edge of editedGraph.edgeList) {
       if (
@@ -137,6 +142,7 @@ const GraphView = () => {
 
   // Handle changes in node count
   const handleNodeCountChange = (value) => {
+    if (!editedGraph) return; // Prevent errors if editedGraph is null
     let newNodeCount = parseInt(value, 10);
     if (isNaN(newNodeCount) || newNodeCount < 1) {
       alert('Node count must be a positive integer.');
@@ -159,11 +165,13 @@ const GraphView = () => {
 
   // Handle changes in graph type (directed/undirected)
   const handleGraphTypeChange = (value) => {
+    if (!editedGraph) return; // Prevent errors if editedGraph is null
     setEditedGraph({ ...editedGraph, graphType: value });
   };
 
   // Handle changes in weight type (weighted/unweighted)
   const handleWeightTypeChange = (value) => {
+    if (!editedGraph) return; // Prevent errors if editedGraph is null
     let updatedEdgeList = editedGraph.edgeList;
     if (value === 'unweighted') {
       // Remove weight from all edges
@@ -212,6 +220,10 @@ const GraphView = () => {
     return [...nodes, ...edges];
   };
 
+  // Determine if the graph is directed
+  const currentGraph = editing ? editedGraph : graph;
+  const isDirected = currentGraph ? currentGraph.graphType === 'directed' : false;
+
   // Define Cytoscape layout and styles
   const layout = { name: 'cose', animate: false };
   const stylesheet = [
@@ -233,20 +245,13 @@ const GraphView = () => {
       style: {
         width: 2,
         'line-color': '#B3B3B3',
-        'target-arrow-color':
-          editing && editedGraph.graphType === 'directed'
-            ? '#B3B3B3'
-            : '#B3B3B3',
+        'target-arrow-color': isDirected ? '#B3B3B3' : 'none',
         'curve-style': 'bezier',
         label: 'data(label)',
         'font-size': '10px',
         'text-rotation': 'autorotate',
-        'target-arrow-shape':
-          editing && editedGraph.graphType === 'directed'
-            ? 'triangle'
-            : 'none',
-        'arrow-scale':
-          editing && editedGraph.graphType === 'directed' ? 1.5 : 0.1,
+        'target-arrow-shape': isDirected ? 'triangle' : 'none',
+        'arrow-scale': isDirected ? 1.5 : 0.1,
         color: '#000000',
       },
     },
@@ -309,7 +314,7 @@ const GraphView = () => {
                   <TextField
                     select
                     label="Graph Type"
-                    value={editedGraph.graphType}
+                    value={editedGraph ? editedGraph.graphType : ''}
                     onChange={(e) => handleGraphTypeChange(e.target.value)}
                     fullWidth
                     variant="outlined"
@@ -323,7 +328,7 @@ const GraphView = () => {
                   <TextField
                     select
                     label="Weight Type"
-                    value={editedGraph.weightType}
+                    value={editedGraph ? editedGraph.weightType : ''}
                     onChange={(e) => handleWeightTypeChange(e.target.value)}
                     fullWidth
                     variant="outlined"
@@ -336,7 +341,7 @@ const GraphView = () => {
                 <Grid item xs={12}>
                   <TextField
                     label="Number of Nodes"
-                    value={editedGraph.nodes}
+                    value={editedGraph ? editedGraph.nodes : ''}
                     onChange={(e) => handleNodeCountChange(e.target.value)}
                     fullWidth
                     type="number"
@@ -398,7 +403,10 @@ const GraphView = () => {
                           />
                         </Grid>
                       )}
-                      <Grid item xs={editedGraph.weightType === 'weighted' ? 1 : 2}>
+                      <Grid
+                        item
+                        xs={editedGraph.weightType === 'weighted' ? 1 : 2}
+                      >
                         <IconButton
                           color="secondary"
                           onClick={() => handleRemoveEdge(index)}
@@ -472,8 +480,8 @@ const GraphView = () => {
                 Edit Graph
               </Button>
             </Box>
-  
-           <Box mt={4} display="flex" flexDirection="column" alignItems="flex-start" bgcolor="#f9f9f9" p={2} borderRadius={2} boxShadow={1}>
+
+            <Box mt={4} display="flex" flexDirection="column" alignItems="flex-start" bgcolor="#f9f9f9" p={2} borderRadius={2} boxShadow={1}>
               <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>Edge List:</Typography>
               <List dense={true}>
                 {graph.edgeList.map((edge, index) => (
